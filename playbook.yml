@@ -1,0 +1,31 @@
+---
+- name: Ping hosts
+  hosts: all
+  become: yes
+
+  tasks:
+    - shell: "hostname"
+      register: hostname
+
+    - debug:
+        msg: "{{hostname.stdout}}"
+
+
+- name: Provision inetRouter
+  hosts: inetRouter
+  become: yes
+
+  tasks:
+    - sysctl:
+        name: net.ipv4.conf.all.forwarding
+        value: '1'
+        state: present
+
+    - name: Add nat rule to iptables
+      iptables:
+        table: nat
+        chain: POSTROUTING
+        destination: 192.168.0.0/16
+        out_interface: eth0
+        jump: MASQUERADE
+        state: present
